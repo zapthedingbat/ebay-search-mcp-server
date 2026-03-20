@@ -76,7 +76,9 @@ const OPENAI_TOOLS = [
 const OPENAI_TOOL_NAMES = OPENAI_TOOLS.map((t) => t.function.name);
 
 /**
- * OpenAPI 3 spec for OpenWebUI-style discovery. Paths are absolute from the server root (router mounted at /openai).
+ * OpenAPI 3 spec for OpenWebUI-style discovery.
+ * Use server url `/openai` and path keys `/tools`, `/tools/execute` so clients that anchor on
+ * `.../openai/openapi.json` do not double-prefix (e.g. `/openai` + `/openai/tools/execute`).
  */
 export const OPENAPI_SPEC = {
   openapi: '3.0.3',
@@ -85,9 +87,9 @@ export const OPENAPI_SPEC = {
     description: `OpenAI-compatible function calling: list tools and execute (${OPENAI_TOOL_NAMES.join(', ')}).`,
     version: '1.0.0',
   },
-  servers: [{ url: '/', description: 'API root' }],
+  servers: [{ url: '/openai', description: 'OpenAI tools router (mounted at /openai)' }],
   paths: {
-    '/openai/tools': {
+    '/tools': {
       get: {
         summary: 'List tools',
         description: `Returns OpenAI-style function tool definitions for ${OPENAI_TOOL_NAMES.join(', ')}.`,
@@ -113,7 +115,7 @@ export const OPENAPI_SPEC = {
         },
       },
     },
-    '/openai/tools/execute': {
+    '/tools/execute': {
       post: {
         summary: 'Execute tool',
         description: 'Run a tool by name with arguments. Returns { content } (string).',
