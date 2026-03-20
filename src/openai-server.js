@@ -64,7 +64,8 @@ const OPENAI_TOOLS = [
         properties: {
           itemId: {
             type: 'string',
-            description: 'eBay item ID (e.g. v1|123456|0)',
+            description:
+              'Item ID: use the value from search results (e.g. v1|123|0), or the legacy numeric ID from the listing URL (e.g. 358312826624).',
           },
         },
         required: ['itemId'],

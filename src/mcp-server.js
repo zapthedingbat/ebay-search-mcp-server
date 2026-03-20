@@ -129,7 +129,11 @@ export function createMcpRouter(automation) {
         title: 'Get item details',
         description: 'Get full details for an eBay item by item ID (from search results).',
         inputSchema: {
-          itemId: z.string().describe('eBay item ID (e.g. v1|123456|0)'),
+          itemId: z
+            .string()
+            .describe(
+              'Item ID from search (e.g. v1|123|0) or legacy numeric ID from the /itm/ URL (e.g. 358312826624)'
+            ),
         },
         handler: async ({ itemId }) => {
           const item = await automation.getItem(itemId);

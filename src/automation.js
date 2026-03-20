@@ -119,11 +119,16 @@ export class Automation {
 
   /**
    * Get full item details by item ID.
-   * @param {string} itemId - eBay item ID (e.g. v1|123456|0)
+   * @param {string} itemId - REST item ID from search (`v1|123|0`) or legacy numeric ID from the listing URL (`/itm/123`)
    */
   async getItem(itemId) {
-    log('getItem %s', itemId);
-    const item = await this._getApi().buy.browse.getItem(itemId);
+    const raw = String(itemId ?? '').trim();
+    log('getItem %s', raw);
+    const api = this._getApi();
+    /** Browse `GET /item/{item_id}` only accepts REST IDs; plain digits need get_item_by_legacy_id. @see https://developer.ebay.com/api-docs/buy/browse/resources/item/methods/getItem */
+    const item = /^\d+$/.test(raw)
+      ? await api.buy.browse.getItemByLegacyId({ legacy_item_id: raw })
+      : await api.buy.browse.getItem(raw);
     return {
       itemId: item.itemId,
       title: item.title,
