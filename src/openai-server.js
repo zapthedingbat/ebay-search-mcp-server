@@ -7,6 +7,7 @@
  */
 
 import express from 'express';
+import { requireApiKey } from './auth.js';
 
 /** Aligns with MCP `ebay_search` tool description. */
 const SEARCH_TOOL_DESCRIPTION = `Search eBay with query, filter, and sort. Defaults to UK (deliveryCountry=GB). For indicative pricing: sort=newlyListed then average prices. For Buy It Now deals: filter=buyingOptions:{FIXED_PRICE}, sort=newlyListed. For auctions ending soon: filter=buyingOptions:{AUCTION}, sort=endingSoonest. Use itemLocationCountry=GB to limit to UK-based sellers (avoid import).`;
@@ -188,22 +189,22 @@ export function createOpenAiRouter(automation) {
 
   const asyncHandler = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
-  /** GET /openai/openai.json – return OpenAPI spec for OpenAI API */
-  router.get('/openai.json', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Mcp-Session-Id');
+  /** GET /openai/openapi.json – OpenAPI spec for OpenWebUI / discovery */
+  router.get('/openapi.json', (req, res) => {
     res.json(OPENAPI_SPEC);
   });
 
   /** GET /openai/tools – return tool definitions for OpenAI API */
-  router.get('/tools', (_, res) => {
-    res.json({ tools: OPENAI_TOOLS });
-  });
+  router.get('/tools',
+    requireApiKey,
+    (_, res) => {
+      res.json({ tools: OPENAI_TOOLS });
+    });
 
   /** POST /openai/tools/execute – execute one tool. Body: { name, arguments } where arguments is object or JSON string. */
   router.post(
     '/tools/execute',
+    requireApiKey,
     express.json(),
     asyncHandler(async (req, res) => {
       const { name, arguments: argsRaw } = req.body ?? {};

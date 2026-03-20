@@ -12,19 +12,7 @@ const log = createLogger('auth');
 
 const SECRET_ENV = 'EBAY_API_KEY';
 
-/**
- * Express middleware that rejects with 401 if EBAY_API_KEY is set and the request
- * does not provide a matching Bearer token or X-API-Key.
- * Skips validation for path /health so health checks remain unauthenticated.
- * Also skips /openapi.json and /openapi/* so OpenWebUI discovery works without a key.
- */
 export function requireApiKey(req, res, next) {
-  if (req.path === '/health') {
-    return next();
-  }
-  if (req.path === '/openapi.json' || req.path.startsWith('/openapi/')) {
-    return next();
-  }
 
   const secret = process.env[SECRET_ENV];
   if (!secret) {

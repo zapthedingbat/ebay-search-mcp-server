@@ -7,11 +7,9 @@ import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import express from 'express';
 import * as z from 'zod/v4';
-import { Automation } from './automation.js';
 import { requireApiKey } from './auth.js';
 import { createLogger } from './logger.js';
 
@@ -37,7 +35,7 @@ export function createMcpRouter(automation) {
   const router = express.Router();
 
   /** Open WebUI (and similar clients) fetch /mcp/openapi.json for discovery. Return minimal OpenAPI 3 + CORS. */
-  const openApiSpec = {
+  const OPENAPI_SPEC = {
     openapi: '3.0.0',
     info: { title: 'eBay Automation MCP', version: '1.0.0', description: 'MCP Streamable HTTP server for eBay search and item details.' },
     paths: {
@@ -52,18 +50,13 @@ export function createMcpRouter(automation) {
     servers: [{ url: '/mcp', description: 'MCP base path' }],
   };
 
+  /** GET /mcp/openapi.json – OpenAPI spec for OpenWebUI / discovery */
   router.get('/openapi.json', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Mcp-Session-Id');
-    res.json(openApiSpec);
+    res.json(OPENAPI_SPEC);
   });
-  router.options('/openapi.json', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Mcp-Session-Id');
-    res.sendStatus(204);
-  });
+
+  /** Use requireApiKey middleware to authenticate all requests */
+  router.use(requireApiKey);
 
   /** @type {Map<string, SSEServerTransport>} */
   const sseTransports = new Map();
@@ -274,36 +267,4 @@ export function createMcpRouter(automation) {
   });
 
   return router;
-}
-
-const isMain = process.argv[1]?.includes('mcp-server.js');
-if (isMain) {
-  const ebayConfig = {
-    appId: process.env.EBAY_APP_ID,
-    certId: process.env.EBAY_CERT_ID,
-    sandbox: process.env.EBAY_SANDBOX === 'true',
-    marketplaceId: process.env.EBAY_MARKETPLACE_ID || 'EBAY_GB',
-  };
-  const automation = new Automation(ebayConfig);
-  const app = createMcpExpressApp({
-    host: process.env.MCP_HOST || '0.0.0.0',
-    allowedHosts: process.env.MCP_ALLOWED_HOSTS
-      ? process.env.MCP_ALLOWED_HOSTS.split(',').map((h) => h.trim()).filter(Boolean)
-      : ['localhost', '127.0.0.1', '[::1]'],
-  });
-  app.use(requireApiKey);
-  app.use('/mcp', createMcpRouter(automation));
-  const PORT = Number(process.env.MCP_PORT) || 3100;
-  const HOST = process.env.MCP_HOST || '0.0.0.0';
-  process.on('SIGTERM', async () => {
-    await automation.close().catch(console.error);
-    process.exit(0);
-  });
-  app.listen(PORT, HOST, () =>
-    log(
-      'eBay MCP server on %s:%s (Streamable HTTP: POST /mcp; HTTP+SSE: GET /mcp/sse, POST /mcp/messages)',
-      HOST,
-      PORT
-    )
-  );
 }

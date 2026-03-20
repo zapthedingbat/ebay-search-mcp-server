@@ -19,6 +19,7 @@ export function createApiRouter(automation) {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   );
 
+  /** Use requireApiKey middleware to authenticate all requests */
   router.use(requireApiKey);
 
   // GET /api/search?q=... & optional filter, sort, deliveryCountry, itemLocationCountry, limit, offset
@@ -69,24 +70,4 @@ export function createApiRouter(automation) {
   });
 
   return router;
-}
-
-const isMain = process.argv[1]?.includes('api-server.js');
-if (isMain) {
-  const ebayConfig = {
-    appId: process.env.EBAY_APP_ID,
-    certId: process.env.EBAY_CERT_ID,
-    sandbox: process.env.EBAY_SANDBOX === 'true',
-    marketplaceId: process.env.EBAY_MARKETPLACE_ID || 'EBAY_GB',
-  };
-  const automation = new Automation(ebayConfig);
-  const app = express();
-  app.use(express.json());
-  app.use('/api', createApiRouter(automation));
-  const PORT = process.env.PORT || 3000;
-  process.on('SIGTERM', async () => {
-    await automation.close().catch(console.error);
-    process.exit(0);
-  });
-  app.listen(PORT, () => log('eBay API on port %s', PORT));
 }
