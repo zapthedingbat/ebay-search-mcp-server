@@ -1,0 +1,32 @@
+{
+  "name": "ebay-automation",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node -r dotenv/config src/server.js",
+    "dev": "node --watch -r dotenv/config src/server.js",
+    "api-server": "node -r dotenv/config src/api-server.js",
+    "mcp-server": "node -r dotenv/config src/mcp-server.js"
+  },
+  "keywords": [
+    "ebay",
+    "automation",
+    "api",
+    "browse",
+    "deals"
+  ],
+  "license": "MIT",
+  "description": "eBay automation: search, item details, and deals via REST API and MCP (Browse API only)",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "cors": "^2.8.5",
+    "debug": "^4.4.3",
+    "ebay-api": "^9.4.4",
+    "express": "^5.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "dotenv": "^16.6.1"
+  }
+}

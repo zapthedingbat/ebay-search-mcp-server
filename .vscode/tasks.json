@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Test /api/search endpoint (DDR4 ECC RAM)",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-s",
+				"http://localhost:3000/api/search?q=DDR4+ECC+RAM&limit=5"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

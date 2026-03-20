@@ -1,0 +1,35 @@
+services:
+  ebay-automation:
+    container_name: ebay-automation
+    hostname: ebay-automation
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - EBAY_APP_ID=${EBAY_APP_ID}
+      - EBAY_CERT_ID=${EBAY_CERT_ID}
+      - EBAY_SANDBOX=${EBAY_SANDBOX}
+      - DEBUG=${DEBUG:-ebay:*}
+      - MCP_ALLOWED_HOSTS=${MCP_ALLOWED_HOSTS:-localhost,127.0.0.1,ebay-automation.internal,ebay-automation.bridgecottage.network}
+    env_file:
+      - .env
+    networks:
+      reverse-proxy:
+      egress:
+      home-automation:
+        aliases:
+          - ebay-automation.internal
+
+    labels:
+      traefik.enable: "true"
+      traefik.http.services.ebay-automation.loadbalancer.server.port: "3000"
+networks:
+  home-automation:
+    name: home-automation
+    external: true
+  reverse-proxy:
+    external: true
+    name: platform_reverse_proxy
+  egress:
+    external: true
+    name: platform_egress
