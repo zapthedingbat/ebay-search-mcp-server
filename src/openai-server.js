@@ -188,8 +188,13 @@ export function createOpenAiRouter(automation) {
 
   const asyncHandler = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
-  /** GET /openai/openapi.json – return OpenAPI spec for OpenAI API */
-  router.get('/openai.json', (_, res) => res.json(OPENAPI_SPEC));
+  /** GET /openai/openai.json – return OpenAPI spec for OpenAI API */
+  router.get('/openai.json', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Mcp-Session-Id');
+    res.json(OPENAPI_SPEC);
+  });
 
   /** GET /openai/tools – return tool definitions for OpenAI API */
   router.get('/tools', (_, res) => {

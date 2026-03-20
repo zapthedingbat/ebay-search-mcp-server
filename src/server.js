@@ -26,9 +26,11 @@ const allowedHosts = process.env.MCP_ALLOWED_HOSTS
 
 const app = createMcpExpressApp({ host: HOST, allowedHosts });
 
-// Log all requests
+// Log method, path, and response status when the response is sent
 app.use((req, res, next) => {
-  log('Request: %s %s', req.method, req.url);
+  res.on('finish', () => {
+    log('Request: %s %s %d', req.method, req.url, res.statusCode);
+  });
   next();
 });
 
