@@ -99,8 +99,8 @@ Adding the connection is not enough — the model must have the tools **enabled*
 1. **Add the connection** (if not already):
    - **Settings → Connections**
    - Add **OpenAPI** (for this server's OpenAI-style tools) with URL:  
-     `https://ebay-automation.bridgecottage.network`  
-     (no path). Or add **MCP Streamable HTTP** with URL:  
+     `https://ebay-automation.bridgecottage.network/openai`
+     Or add **MCP Streamable HTTP** with URL:  
      `https://ebay-automation.bridgecottage.network/mcp`
    - If you use **EBAY_API_KEY**, set **Bearer** and paste the key.
 

@@ -5,9 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node -r dotenv/config src/server.js",
-    "dev": "node --watch -r dotenv/config src/server.js",
-    "api-server": "node -r dotenv/config src/api-server.js",
-    "mcp-server": "node -r dotenv/config src/mcp-server.js"
+    "dev": "node --watch -r dotenv/config src/server.js"
   },
   "keywords": [
     "ebay",

@@ -3,8 +3,7 @@ import cors from 'cors';
 import { Automation } from './automation.js';
 import { createApiRouter } from './api-server.js';
 import { createMcpRouter } from './mcp-server.js';
-import { createOpenAiRouter } from './openai-server.js';
-import { OPENAPI_SPEC } from './openapi.js';
+import { createOpenAiRouter, OPENAPI_SPEC } from './openai-server.js';
 import { requireApiKey } from './auth.js';
 import { createLogger } from './logger.js';
 
@@ -35,12 +34,6 @@ app.use((req, res, next) => {
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(requireApiKey);
-
-
-// OpenWebUI (and similar) probe for OpenAPI at these paths when base URL is the server root
-app.get('/openapi.json', (_, res) => res.json(OPENAPI_SPEC));
-app.get('/openapi/openapi.json', (_, res) => res.json(OPENAPI_SPEC));
-app.get('/openapi/tools/openapi.json', (_, res) => res.json(OPENAPI_SPEC));
 
 app.use('/api', createApiRouter(automation));
 app.use('/mcp', createMcpRouter(automation));
