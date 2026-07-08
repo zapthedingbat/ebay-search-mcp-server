@@ -184,23 +184,10 @@ export function createMcpRouter(automation) {
       }
       if (req.method === 'POST') {
         if (transport) {
-          if (isInitializeRequest(req.body)) {
-            res.setHeader('mcp-session-id', sessionId);
-            res.status(200).json({
-              jsonrpc: '2.0',
-              result: {
-                protocolVersion: '2025-03-26',
-                capabilities: { logging: {}, tools: { listChanged: true } },
-                serverInfo: {
-                  name: SERVER_INFO.name,
-                  version: SERVER_INFO.version,
-                },
-                instructions: SERVER_INFO.instructions,
-              },
-              id: req.body.id ?? null,
-            });
-            return;
-          }
+          // Let the SDK transport handle all POSTs on an existing session,
+          // including re-initialize. Hand-rolling the initialize response here
+          // hardcoded the protocol version and bypassed the transport state
+          // machine, which broke real sessions while single-shot tests passed.
           await transport.handleRequest(req, res, req.body);
           return;
         }
