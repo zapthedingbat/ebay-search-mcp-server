@@ -67,7 +67,7 @@ export function createMcpRouter(automation) {
     name: 'ebay-automation',
     version: '1.0.0',
     instructions:
-      'eBay search: use ebay_search with query, optional filter and sort. Default is UK delivery (GB). For market pricing use sort=newlyListed and average the prices. For deals use FIXED_PRICE+newlyListed or AUCTION+endingSoonest. Use ebay_get_item for full item details. Cart: use ebay_get_cart to list cart items, ebay_add_to_cart with itemId (from search) to add, ebay_remove_from_cart with cartItemId (from get_cart) to remove.',
+      'eBay search: use ebay_search with query, optional filter and sort. Default is UK delivery (GB). For market pricing use sort=newlyListed and average the prices. For deals use FIXED_PRICE+newlyListed or AUCTION+endingSoonest. Use ebay_get_item for full item details — multi-variant listings are automatically resolved with all variants and individual prices in one response. Cart: use ebay_get_cart to list cart items, ebay_add_to_cart with itemId (from search) to add, ebay_remove_from_cart with cartItemId (from get_cart) to remove.',
   };
 
   function getMcpServer() {
@@ -107,8 +107,10 @@ export function createMcpRouter(automation) {
           const lines = (result.itemSummaries || [])
             .slice(0, 25)
             .map(
-              (i) =>
-                `${i.title || 'N/A'} | ${i.price ? `${i.price.value} ${i.price.currency}` : 'N/A'} | ${i.itemWebUrl || i.itemId}`
+              (i) => {
+                const group = i.itemGroupType ? ` [${i.itemGroupType}]` : '';
+                return `${i.title || 'N/A'} | ${i.price ? `${i.price.value} ${i.price.currency}` : 'N/A'}${group} | ${i.itemWebUrl || i.itemId}`;
+              }
             )
             .join('\n');
           const summary = result.itemSummaries?.length
@@ -127,7 +129,7 @@ export function createMcpRouter(automation) {
       {
         name: 'ebay_get_item',
         title: 'Get item details',
-        description: 'Get full details for an eBay item by item ID (from search results).',
+        description: 'Get full details for an eBay item by item ID. Multi-variant listings (multiple sizes/colours) are automatically resolved — all variants with individual prices are returned in one response.',
         inputSchema: {
           itemId: z
             .string()
@@ -137,15 +139,31 @@ export function createMcpRouter(automation) {
         },
         handler: async ({ itemId }) => {
           const item = await automation.getItem(itemId);
-          const text = [
+          const lines = [
             `Title: ${item.title || 'N/A'}`,
             item.price ? `Price: ${item.price.value} ${item.price.currency}` : '',
             item.condition ? `Condition: ${item.condition}` : '',
             item.itemWebUrl ? `URL: ${item.itemWebUrl}` : '',
             item.shortDescription ? `Description: ${item.shortDescription}` : '',
-          ]
-            .filter(Boolean)
-            .join('\n');
+          ];
+          if (item.localizedAspects?.length) {
+            lines.push('', 'Attributes:');
+            for (const a of item.localizedAspects) {
+              lines.push(`  ${a.name}: ${a.value}`);
+            }
+          }
+          if (item.variants?.length) {
+            lines.push('', `Variants (${item.variants.length}):`);
+            for (const v of item.variants) {
+              const aspects = (v.localizedAspects || [])
+                .map((a) => `${a.name}: ${a.value}`)
+                .join(', ');
+              lines.push(
+                `  - ${v.price ? `${v.price.value} ${v.price.currency}` : 'N/A'} | ${aspects || 'no attributes'} | ${v.itemId}`
+              );
+            }
+          }
+          const text = lines.filter(Boolean).join('\n');
           return { content: [{ type: 'text', text: text || 'Item not found.' }] };
         },
       },

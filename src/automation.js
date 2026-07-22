@@ -107,6 +107,7 @@ export class Automation {
       price: parsePrice(item.price),
       itemWebUrl: item.itemWebUrl,
       condition: item.condition,
+      itemGroupType: item.itemGroupType || null,
     }));
 
     return {
@@ -129,14 +130,41 @@ export class Automation {
     const item = /^\d+$/.test(raw)
       ? await api.buy.browse.getItemByLegacyId({ legacy_item_id: raw })
       : await api.buy.browse.getItem(raw);
-    return {
+    const result = {
       itemId: item.itemId,
       title: item.title,
       price: parsePrice(item.price),
       itemWebUrl: item.itemWebUrl,
       condition: item.condition,
       shortDescription: item.shortDescription,
+      localizedAspects: (item.localizedAspects || []).map((a) => ({
+        name: a.name,
+        value: a.value,
+      })),
+      variants: null,
     };
+
+    // Auto-resolve multi-variant listings in one shot
+    if (item.primaryItemGroup?.itemGroupId) {
+      log('getItem %s is multi-variant (group %s), fetching variants', raw, item.primaryItemGroup.itemGroupId);
+      try {
+        const group = await api.buy.browse.getItemsByItemGroup(item.primaryItemGroup.itemGroupId);
+        result.variants = (group.items || []).map((v) => ({
+          itemId: v.itemId,
+          title: v.title,
+          price: parsePrice(v.price),
+          itemWebUrl: v.itemWebUrl,
+          localizedAspects: (v.localizedAspects || []).map((a) => ({
+            name: a.name,
+            value: a.value,
+          })),
+        }));
+      } catch (err) {
+        log('getItem %s variant fetch failed: %s', raw, err.message);
+        // Non-fatal: return the single item without variants
+      }
+    }
+    return result;
   }
 
   // ...existing code...
